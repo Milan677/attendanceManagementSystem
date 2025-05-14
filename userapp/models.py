@@ -63,3 +63,48 @@ class CustomUser(AbstractBaseUser,PermissionsMixin):
 
     def __str__(self):
         return self.email    
+    
+
+class Class(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    students = models.ManyToManyField('CustomUser', limit_choices_to={'role': 'student'}, related_name='classes')
+
+    def __str__(self):
+        return self.name
+
+class ClassSchedule(models.Model):
+    classroom = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='schedules')
+    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __str__(self):
+        return f"{self.classroom.name} - {self.date} ({self.start_time} to {self.end_time})"
+
+class AttendanceSession(models.Model):
+    schedule = models.ForeignKey(ClassSchedule, on_delete=models.CASCADE, related_name='sessions')
+    session_code = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_active(self):
+        return now() < self.expires_at
+
+    def __str__(self):
+        return f"{self.schedule} | {self.session_code}"
+
+
+class Attendance(models.Model):
+    student = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE)
+    classroom = models.ForeignKey(Class, on_delete=models.CASCADE)  # ✅ add this
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'session')  # Prevent duplicate attendance
+
+    
+    def __str__(self):
+        return f"{self.student.email} - {self.session}"
+        

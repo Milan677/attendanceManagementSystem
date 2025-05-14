@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import *
 
 class CustomUserSerializers(serializers.ModelSerializer):
     class Meta:
@@ -25,3 +25,26 @@ class CustomUserSerializers(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+    
+class ClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Class
+        fields = ['id', 'name', 'students']    
+
+class ClassScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassSchedule
+        fields = ['id', 'classroom', 'teacher', 'date', 'start_time', 'end_time']
+
+
+class AttendanceSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AttendanceSession
+        fields = ['id', 'schedule', 'session_code', 'created_at', 'expires_at']
+
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Attendance
+        fields = ['id', 'student', 'classroom', 'session', 'timestamp']

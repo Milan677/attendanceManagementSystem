@@ -59,6 +59,10 @@ def userLoginView(request):
         refresh = RefreshToken.for_user(user)
         return Response({
                 "message": "Login successful",
+                "user":{
+                    "email":user.email,
+                    "role":user.role,
+                },
                 "access_token": str(refresh.access_token),
                 "refresh_token": str(refresh),    
             }, status=status.HTTP_200_OK)
@@ -107,3 +111,38 @@ def createSessionAndQrCode(request):
             "error": str(e),
             "message": "Error occurred in user app"
         },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+def submitAttendance(request):
+    try:
+        student = request.user
+        session_code = request.data.get('session_code')
+        session = AttendanceSession.objects.get(session_code=session_code)
+        if not session:
+            return Response({"error":"Invalid session code !"})
+        
+        if not session.is_active():
+            return Response({"error": "Session expired"}, status=400)
+        
+        classroom = session.schedule.classroom
+        if not classroom.students.filter(id=student.id).exists():
+            return Response({"error": "You are not enrolled in this class"}, status=403)
+        
+        attendance, created = Attendance.objects.get_or_create(
+            student=student,
+            session=session,
+            defaults={'classroom': classroom}
+        )
+
+        if not created:
+            return Response({"message": "Attendance already marked"})
+
+        return Response({"message": "Attendance submitted successfully"})
+    
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": "Error occurred in user app"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

@@ -5,4 +5,8 @@ urlpatterns = [
     path('register/', userRegistrationView, name='user-register'),
     path('login/',userLoginView,name="user-login"),
     path('hii/',getUser),
+    # teacher's schedule
+    path('get-teacher-schedule/',teacherSchedule,name="teacher-schedules"),
+    path('create-qr/',createSessionAndQrCode,name='create-qr'),
+    path('submit-attendance/',submitAttendance,name='submit-attendance'),
 ]

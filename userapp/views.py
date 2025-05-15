@@ -80,6 +80,27 @@ def getUser(request):
     print(request.user)
     return Response({"msg":"see terminal"})
 
+# teacher's shedule
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+def teacherSchedule(request):
+    try:
+        teacher = request.user
+        shedules = ClassSchedule.objects.filter(teacher = teacher)
+        if not shedules:
+            return Response({"message":"No shedule for the teacher ID"})
+        
+        serializer = ClassScheduleSerializer(shedules,many=True)
+        return Response({"data":serializer.data},status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": "Error occurred in login view"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+import base64
+
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 def createSessionAndQrCode(request):
@@ -104,7 +125,13 @@ def createSessionAndQrCode(request):
         qr.save(buffer, format="PNG")
         buffer.seek(0)
 
-        return Response(buffer.read(), content_type='image/png')
+        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+
+        return Response({
+            "session_code": session.session_code,
+            "expires_at": session.expires_at,
+            "qr_code": img_base64  
+        })
 
     except Exception as e:
         return Response({

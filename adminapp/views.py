@@ -168,3 +168,40 @@ def logout_admin(request):
             "message": "Error occurred in logout admin view"
         },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@api_view(['POST'])
+@authentication_classes([AdminAuthentication])
+@permission_classes([IsAuthenticated])
+def create_class(request):
+    try:
+        serializer = ClassSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            "error":str(e),
+            "message":"Error occured in create_class admin view"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+@api_view(['POST'])
+@authentication_classes([AdminAuthentication])
+@permission_classes([IsAuthenticated])
+def shedule_classes(request):
+    try:
+        serializer = ClassScheduleSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            "error":str(e),
+            "message":"Error occured in shedule_classes admin view"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+    

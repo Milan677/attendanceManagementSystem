@@ -8,6 +8,10 @@ from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from django.contrib.auth.hashers import make_password,check_password
 from .serializers import *
 from .models import *
+import uuid
+from django.utils import timezone
+import qrcode
+from io import BytesIO
 
 # Create your views here.
 
@@ -72,3 +76,34 @@ def getUser(request):
     print(request.user)
     return Response({"msg":"see terminal"})
 
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+def createSessionAndQrCode(request):
+    try:
+        teacher = request.user
+        schedule_id = request.data.get('schedule_id')
+        schedule = ClassSchedule.objects.get(id=schedule_id, teacher=teacher)
+        if not schedule:
+            return Response({"error":"invalid shedule"})
+        
+        session_code = uuid.uuid4().hex
+        expires_at = timezone.now() + timezone.timedelta(minutes=30)
+
+        session = AttendanceSession.objects.create(
+            schedule=schedule,
+            session_code=session_code,
+            expires_at=expires_at
+        )
+
+        qr = qrcode.make(session.session_code)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        return Response(buffer.read(), content_type='image/png')
+
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": "Error occurred in user app"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)

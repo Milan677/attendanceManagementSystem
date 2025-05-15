@@ -98,11 +98,11 @@ class AttendanceSession(models.Model):
 class Attendance(models.Model):
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     session = models.ForeignKey(AttendanceSession, on_delete=models.CASCADE)
-    classroom = models.ForeignKey(Class, on_delete=models.CASCADE)  # ✅ add this
+    classroom = models.ForeignKey(Class, on_delete=models.CASCADE)  
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('student', 'session')  # Prevent duplicate attendance
+        unique_together = ('student', 'session')  
 
     
     def __str__(self):

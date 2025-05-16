@@ -98,6 +98,25 @@ def teacherSchedule(request):
             "message": "Error occurred in login view"
         },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+def studentSchedule(request):
+    try:
+        user = request.user
+
+        if user.role != 'student':
+            return Response({"detail": "Only students can access this endpoint."}, status=403)
+
+        # Get all schedules for classes the student is enrolled in
+        schedules = ClassSchedule.objects.filter(classroom__students=user).select_related('classroom', 'teacher')
+
+        serializer = ClassScheduleSerializer(schedules, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": "Error occurred in login view"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 import base64
 

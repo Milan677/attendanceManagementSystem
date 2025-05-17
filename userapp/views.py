@@ -12,6 +12,8 @@ import uuid
 from django.utils import timezone
 import qrcode
 from io import BytesIO
+from django.db.models.functions import TruncDate
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -192,3 +194,33 @@ def submitAttendance(request):
             "message": "Error occurred in user app"
         },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+def get_class_attendance_datewise(request,class_id):
+    try:
+        classroom = get_object_or_404(Class, id=class_id)
+
+        
+        attendances = Attendance.objects.filter(classroom=classroom)
+
+        # Annotate each attendance with the date (only date part of timestamp)
+        attendances = attendances.annotate(attendance_date=TruncDate('timestamp'))
+
+        # Group by date
+        attendance_data = {}
+        for record in attendances:
+            date_str = record.attendance_date.strftime('%Y-%m-%d')
+            if date_str not in attendance_data:
+                attendance_data[date_str] = []
+            attendance_data[date_str].append({
+                'student': record.student.email,
+                'timestamp': record.timestamp.strftime('%H:%M:%S'),
+                'session_code': record.session.session_code
+            })
+
+        return Response({'class': classroom.name, 'attendance': attendance_data},status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            "error": str(e),
+            "message": "Error occurred in user app"
+        },status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
